@@ -8,6 +8,11 @@ import Input from "@/app/components/Inputs/Input";
 import Button from "@/app/components/Button";
 import AuthSocialButton from "./AuthSocialButton";
 
+import axios from "axios";
+
+import { toast } from "react-hot-toast";
+import { signIn } from 'next-auth/react';
+
 type Variant = 'LOGIN' | 'REGISTER';
 
 const AuthForm = () => {
@@ -38,15 +43,36 @@ const AuthForm = () => {
         }
     });
 
-    const onSubmit: SubmitHandler<FieldValues> = (data) => {
+    const onSubmit: SubmitHandler<FieldValues> = async (data) => {
         setIsLoading(true);
 
         if (variant === 'REGISTER') {
-            // Axios Register.
+            try {
+                await axios.post('/api/register', data)
+            } catch (error) {
+                toast.error("Something went wrong!");
+            } finally {
+                setIsLoading(false);
+            }
         }
 
         if (variant === 'LOGIN') {
-            // NextAuth SignIn
+            try {
+                const callback = await signIn('credentials', {
+                    ...data,
+                    redirect: false
+                });
+
+                if (callback?.error) {
+                    toast.error('Invalid credentials!');
+                } else if (callback?.ok) {
+                    toast.success('Logged in!');
+                }
+            } catch (err) {
+                toast.error("Something went wrong while loggin in!");
+            } finally {
+                setIsLoading(false);
+            }
         }
     }
 
